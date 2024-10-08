@@ -1,0 +1,129 @@
+---
+import Button from "fulldev-ui/components/Button.astro"
+import Heading from "fulldev-ui/components/Heading.astro"
+
+import { getCldImageUrl } from "astro-cloudinary/helpers"
+import Layout from "../layouts/Layout.astro"
+
+const { searchParams } = Astro.url
+const id = searchParams.get("id")
+
+if (id == null) return Astro.redirect("/")
+
+const url = getCldImageUrl({ src: id })
+console.log({ id, url })
+---
+
+<Layout title="Cloudinary Photo">
+  <main data-id={id}>
+    <header>
+      <Heading color="brand" contrast={false}> Selecciona el tema </Heading>
+      <Button
+        class="add"
+        data-topic="ghost"
+        icon="ghost"
+        as="button"
+        color="brand"
+      >
+        ¡Añade fantasmas!
+      </Button>
+
+      <Button
+        class="add"
+        data-topic="zombies"
+        icon="grave-2"
+        as="button"
+        color="brand"
+      >
+        ¡GROAR ZOMBIES!
+      </Button>
+
+      <Button
+        class="add"
+        data-topic="devil"
+        icon="pentagram"
+        as="button"
+        color="brand"
+      >
+        ¡El diablo!
+      </Button>
+    </header>
+
+    <two-up>
+      <img id="original" src={url} />
+      <img id="preview" src={url} />
+    </two-up>
+
+    <small>{url}</small>
+
+    <div>
+      <Button class="download" icon="download" as="button" color="brand">
+        Descargar en Avif
+      </Button>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  main {
+    width: 800px;
+    margin: 0 auto;
+    padding-top: 100px;
+    text-align: center;
+    padding-bottom: 100px;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    transition: opacity 0.3s ease;
+  }
+</style>
+
+<script>
+  import { getCldImageUrl } from "astro-cloudinary/helpers"
+  import "two-up-element"
+
+  const id = document.querySelector("main")?.getAttribute("data-id") ?? ""
+  const preview = document.getElementById("preview") as HTMLImageElement
+  const buttons = document.querySelectorAll("button")
+  const downloadButton = document.querySelector(
+    ".download"
+  ) as HTMLButtonElement
+
+  const TOPICS: Record<string, string> = {
+    ghost: "Add scary ghosts to the background",
+    zombies: "Add zombies to the background",
+    devil: "Add some devils to the background",
+    custom: "",
+  } as const
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const topic = button.getAttribute("data-topic")
+      if (topic == null) return
+
+      const url = getCldImageUrl({
+        src: id,
+        replaceBackground: TOPICS[topic],
+      })
+
+      preview.style.opacity = ".3"
+
+      preview.src = url
+      preview.onload = () => {
+        preview.style.opacity = "1"
+      }
+    })
+  })
+
+  downloadButton.addEventListener("click", (e) => {
+    const url = getCldImageUrl({ src: id, format: "avif" })
+
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "image.avif"
+    a.click()
+  })
+</script>
